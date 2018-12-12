@@ -2,6 +2,7 @@
 #![no_main]
 
 extern crate uefi;
+extern crate uefi_alloc;
 extern crate uefi_exts;
 extern crate uefi_services;
 
@@ -21,20 +22,24 @@ pub extern "win64" fn uefi_start(handle: uefi::Handle, st: SystemTable<Boot>) ->
     uefi_services::init(&st).expect_success("Failed to initialize uefi_services");
 
     // Get boot services pointer
-    let bt = st.boot_services();
+    let bs = st.boot_services();
 
     // Get runtime services pointer
     let rt = st.runtime_services();
 
+    // Initialize our allocator
+    uefi_alloc::init(bs);
+
+    /*
     // Get Filesystem handle
-    if let Some(sfs) = bt.find_protocol::<SimpleFileSystem>() {
+    if let Some(sfs) = bs.find_protocol::<SimpleFileSystem>() {
         let sfs = unsafe { &mut *sfs.get() };
 
     } else {
         error!("Failed to load sfs handler");
     }
 
-    /*
+    
     // Get Filesystem handle
     if let Some(sfs) = bt.find_protocol::<SimpleFileSystem>() {
         let sfs = unsafe { &mut *sfs.get() };
@@ -44,7 +49,7 @@ pub extern "win64" fn uefi_start(handle: uefi::Handle, st: SystemTable<Boot>) ->
     }
     */
     // Get Filesystem handle
-    let sfs = bt.find_protocol::<SimpleFileSystem>()
+    let sfs = bs.find_protocol::<SimpleFileSystem>()
         .expect("Failed to load sfs handler");
     let sfs = unsafe { &mut *sfs.get() };
 
